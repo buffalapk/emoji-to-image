@@ -27,20 +27,12 @@
             border-radius: 5px;
         }
         @font-face {
-            font-family: 'emojiFont';
-            src: url('seguiemj2.ttf');
+            font-family: 'emojiFontNoto1';
+            src: url('NotoEmoji-VariableFont_wght.ttf');
         }
         @font-face {
-            font-family: 'emojiFontNoto';
+            font-family: 'emojiFontNoto2';
             src: url('NotoColorEmoji-Regular.ttf');
-        }
-        @font-face {
-            font-family: 'emojiFontSwiftUI';
-            src: url('Emoji-SwiftUIFlat15.1.ttf');
-        }
-        @font-face {
-            font-family: 'emojiFontBlob';
-            src: url('Blob_v15.1.ttf');
         }
     </style>
 </head>
@@ -165,7 +157,7 @@
             const emojiInput = document.getElementById('emojiInput').value;
             const fontSelector = document.getElementById('fontSelector').value;
             const fonts = {
-                'notoemoji1': 'NotoEmoji-Regular.ttf',
+                'notoemoji1': 'NotoEmoji-VariableFont_wght.ttf',
                 'notoemoji2': 'NotoColorEmoji-Regular.ttf',
             };
 
