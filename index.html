@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>絵文字画像変換</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <style>
+        #emojiCanvas {
+            border: 1px solid #000;
+            margin-top: 20px;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        .modal {
+            width: 80%;
+            max-width: 600px;
+        }
+        #notification {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+        }
+        @font-face {
+            font-family: 'emojiFont';
+            src: url('seguiemj2.ttf');
+        }
+        @font-face {
+            font-family: 'emojiFontNoto';
+            src: url('NotoColorEmoji-Regular.ttf');
+        }
+        @font-face {
+            font-family: 'emojiFontSwiftUI';
+            src: url('Emoji-SwiftUIFlat15.1.ttf');
+        }
+        @font-face {
+            font-family: 'emojiFontBlob';
+            src: url('Blob_v15.1.ttf');
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="center-align">絵文字を画像に変換</h1>
+        <div class="input-field">
+            <textarea id="emojiInput" class="materialize-textarea" placeholder="ここに絵文字やテキストを入力してください..."></textarea>
+            <label for="emojiInput">絵文字入力</label>
+        </div>
+        <div class="input-field col s12">
+            <select id="fontSelector">
+                <option value="notoemoji1" selected>Noto Emoji</option>
+                <option value="notoemoji2">Noto Color Emoji</option>
+            </select>
+            <label>フォントを選択</label>
+        </div>
+        <div class="input-field col s12">
+            <select id="qualitySelector">
+                <option value="1" selected>標準画質</option>
+                <option value="2">高画質</option>
+                <option value="3">超高画質</option>
+            </select>
+            <label>画質を選択</label>
+        </div>
+        <a class="waves-effect waves-light btn-large" onclick="generateImage()">画像に変換</a>
+        <a class="waves-effect waves-light btn-large red" onclick="showExportDialog()">画像をエクスポート</a>
+        <a class="waves-effect waves-light btn-large teal" onclick="copyToClipboard()">画像をクリップボードにコピー</a>
+        <canvas id="emojiCanvas"></canvas>
+        <div id="notification">画像がクリップボードにコピーされました！</div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h4>画像の名前を入力</h4>
+            <input type="text" id="fileNameInput" placeholder="画像の名前">
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="modal-close waves-effect waves-green btn-flat" onclick="exportImage()">保存</a>
+            <a href="#" class="modal-close waves-effect waves-red btn-flat">キャンセル</a>
+        </div>
+    </div>
+
+    <!-- 音声ファイル -->
+    <audio id="soundEffect" src="パフ.mp3"></audio>
+
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            M.FormSelect.init(document.querySelectorAll('select'));
+            M.Modal.init(document.querySelectorAll('.modal'));
+        });
+
+        function generateImage() {
+            const canvas = document.getElementById('emojiCanvas');
+            const ctx = canvas.getContext('2d');
+            const emojiInput = document.getElementById('emojiInput').value;
+            const fontSelector = document.getElementById('fontSelector').value;
+
+            if (emojiInput.trim() === '') {
+                alert('絵文字やテキストを入力してください。');
+                return;
+            }
+
+            const size = 300; // 1:1の画像サイズ
+
+            // フォント設定
+            const fonts = {
+                'notoemoji': 'NotoColorEmoji-Regular.ttf',
+            };
+
+            canvas.width = size;
+            canvas.height = size;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // フォントの読み込みと描画
+            const font = new FontFace('emojiFont', `url(${fonts[fontSelector]})`);
+            font.load().then(function (loadedFont) {
+                document.fonts.add(loadedFont);
+                ctx.font = `${size * 0.6}px emojiFont`; // フォントサイズを画像サイズに合わせる
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // 文字列の描画
+                const lines = emojiInput.split('\n');
+                const lineHeight = size * 0.6;
+                const totalHeight = lines.length * lineHeight;
+
+                lines.forEach((line, index) => {
+                    ctx.fillText(line, canvas.width / 2, (canvas.height - totalHeight) / 2 + lineHeight * (index + 0.5));
+                });
+
+                // 音声を再生
+                const soundEffect = document.getElementById('soundEffect');
+                soundEffect.play();
+            }).catch(function (error) {
+                console.error('フォントの読み込みに失敗しました:', error);
+                alert('フォントの読み込みに失敗しました。');
+            });
+        }
+
+        function showExportDialog() {
+            const modal = M.Modal.getInstance(document.getElementById('exportModal'));
+            modal.open();
+        }
+
+        function exportImage() {
+            const canvas = document.getElementById('emojiCanvas');
+            const qualitySelector = document.getElementById('qualitySelector').value;
+            const scale = parseInt(qualitySelector);
+            const fileName = document.getElementById('fileNameInput').value || 'emoji.png';
+
+            const size = 300; // 基本サイズ
+
+            // 拡大設定
+            canvas.width = size * scale;
+            canvas.height = size * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const emojiInput = document.getElementById('emojiInput').value;
+            const fontSelector = document.getElementById('fontSelector').value;
+            const fonts = {
+                'notoemoji1': 'NotoEmoji-Regular.ttf',
+                'notoemoji2': 'NotoColorEmoji-Regular.ttf',
+            };
+
+            const font = new FontFace('emojiFont', `url(${fonts[fontSelector]})`);
+            font.load().then(function (loadedFont) {
+                document.fonts.add(loadedFont);
+                ctx.font = `${size * 0.6 * scale}px emojiFont`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // 文字列の描画
+                const lines = emojiInput.split('\n');
+                const lineHeight = size * 0.6 * scale;
+                const totalHeight = lines.length * lineHeight;
+
+                lines.forEach((line, index) => {
+                    ctx.fillText(line, canvas.width / 2, (canvas.height - totalHeight) / 2 + lineHeight * (index + 0.5));
+                });
+
+                // エクスポート処理
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataURL;
+                link.download = fileName;
+                link.click();
+            }).catch(function (error) {
+                console.error('フォントの読み込みに失敗しました:', error);
+                alert('フォントの読み込みに失敗しました。');
+            });
+        }
+
+        function copyToClipboard() {
+            const canvas = document.getElementById('emojiCanvas');
+
+            canvas.toBlob(blob => {
+                const clipboardItem = new ClipboardItem({ 'image/png': blob });
+
+                navigator.clipboard.write([clipboardItem])
+                    .then(() => {
+                        showNotification('画像がクリップボードにコピーされました！');
+                    })
+                    .catch(err => {
+                        console.error('クリップボードへのコピーに失敗しました:', err);
+                        showNotification('クリップボードへのコピーに失敗しました。');
+                    });
+            });
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000); // 3秒後に通知を非表示にする
+        }
+    </script>
+</body>
+</html>
